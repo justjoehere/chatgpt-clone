@@ -1,60 +1,62 @@
-const express = require('express');
 const crypto = require('crypto');
-const router = express.Router();
-const { getChatGPTBrowserModels } = require('../endpoints');
-const { browserClient } = require('../../../app/');
-const { saveMessage, getConvoTitle, saveConvo, getConvo } = require('../../../models');
-const { handleError, sendMessage, createOnProgress, handleText } = require('./handlers');
-const requireJwtAuth = require('../../../middleware/requireJwtAuth');
+const express = require('express');
+const { Constants } = require('librechat-data-provider');
+const { saveMessage, getConvoTitle, saveConvo, getConvo } = require('~/models');
+const { handleError, sendMessage, createOnProgress, handleText } = require('~/server/utils');
+const { setHeaders } = require('~/server/middleware');
+const { browserClient } = require('~/app/');
+const { logger } = require('~/config');
 
-router.post('/', requireJwtAuth, async (req, res) => {
+const router = express.Router();
+
+router.post('/', setHeaders, async (req, res) => {
   const {
     endpoint,
     text,
     overrideParentMessageId = null,
     parentMessageId,
-    conversationId: oldConversationId
+    conversationId: oldConversationId,
   } = req.body;
-  if (text.length === 0) return handleError(res, { text: 'Prompt empty or too short' });
-  if (endpoint !== 'chatGPTBrowser') return handleError(res, { text: 'Illegal request' });
+  if (text.length === 0) {
+    return handleError(res, { text: 'Prompt empty or too short' });
+  }
+  if (endpoint !== 'chatGPTBrowser') {
+    return handleError(res, { text: 'Illegal request' });
+  }
 
   // build user message
   const conversationId = oldConversationId || crypto.randomUUID();
   const isNewConversation = !oldConversationId;
   const userMessageId = crypto.randomUUID();
-  const userParentMessageId = parentMessageId || '00000000-0000-0000-0000-000000000000';
+  const userParentMessageId = parentMessageId || Constants.NO_PARENT;
   const userMessage = {
     messageId: userMessageId,
     sender: 'User',
     text,
     parentMessageId: userParentMessageId,
     conversationId,
-    isCreatedByUser: true
+    isCreatedByUser: true,
   };
 
   // build endpoint option
   const endpointOption = {
     model: req.body?.model ?? 'text-davinci-002-render-sha',
-    token: req.body?.token ?? null
+    key: req.body?.key ?? null,
   };
 
-  const availableModels = getChatGPTBrowserModels();
-  if (availableModels.find((model) => model === endpointOption.model) === undefined)
-    return handleError(res, { text: 'Illegal request: model' });
-
-  console.log('ask log', {
+  logger.debug('[/ask/chatGPTBrowser]', {
     userMessage,
-    endpointOption,
-    conversationId
+    conversationId,
+    ...endpointOption,
   });
 
   if (!overrideParentMessageId) {
-    await saveMessage(userMessage);
-    await saveConvo(req.user.id, {
+    await saveMessage(req, { ...userMessage, user: req.user.id });
+    await saveConvo(req, {
       ...userMessage,
       ...endpointOption,
       conversationId,
-      endpoint
+      endpoint,
     });
   }
 
@@ -67,7 +69,7 @@ router.post('/', requireJwtAuth, async (req, res) => {
     preSendRequest: true,
     overrideParentMessageId,
     req,
-    res
+    res,
   });
 });
 
@@ -78,19 +80,10 @@ const ask = async ({
   conversationId,
   overrideParentMessageId = null,
   req,
-  res
+  res,
 }) => {
   let { text, parentMessageId: userParentMessageId, messageId: userMessageId } = userMessage;
-  const userId = req.user.id;
-
-  res.writeHead(200, {
-    Connection: 'keep-alive',
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache, no-transform',
-    'Access-Control-Allow-Origin': '*',
-    'X-Accel-Buffering': 'no'
-  });
-
+  const user = req.user.id;
   let responseMessageId = crypto.randomUUID();
   let getPartialMessage = null;
   try {
@@ -100,29 +93,31 @@ const ask = async ({
         const currentTimestamp = Date.now();
         if (currentTimestamp - lastSavedTimestamp > 500) {
           lastSavedTimestamp = currentTimestamp;
-          saveMessage({
+          saveMessage(req, {
             messageId: responseMessageId,
             sender: endpointOption?.jailbreak ? 'Sydney' : 'BingAI',
             conversationId,
             parentMessageId: overrideParentMessageId || userMessageId,
             text: text,
             unfinished: true,
-            cancelled: false,
-            error: false
+            error: false,
+            isCreatedByUser: false,
+            user,
           });
         }
-      }
+      },
     });
 
     getPartialMessage = getPartialText;
     const abortController = new AbortController();
+    let i = 0;
     let response = await browserClient({
       text,
       parentMessageId: userParentMessageId,
       conversationId,
       ...endpointOption,
       abortController,
-      userId,
+      userId: user,
       onProgress: progressCallback.call(null, { res, text }),
       onEventMessage: (eventMessage) => {
         let data = null;
@@ -134,12 +129,16 @@ const ask = async ({
 
         sendMessage(res, {
           message: { ...userMessage, conversationId: data.conversation_id },
-          created: true
+          created: i === 0,
         });
-      }
+
+        if (i === 0) {
+          i++;
+        }
+      },
     });
 
-    console.log('CLIENT RESPONSE', response);
+    logger.debug('[/ask/chatGPTBrowser]', response);
 
     const newConversationId = response.conversationId || conversationId;
     const newUserMassageId = response.parentMessageId || userMessageId;
@@ -156,34 +155,35 @@ const ask = async ({
       text: await handleText(response),
       sender: endpointOption?.chatGptLabel || 'ChatGPT',
       unfinished: false,
-      cancelled: false,
-      error: false
+      error: false,
+      isCreatedByUser: false,
     };
 
-    await saveMessage(responseMessage);
+    await saveMessage(req, { ...responseMessage, user });
     responseMessage.messageId = newResponseMessageId;
 
     // STEP2 update the conversation
 
     // First update conversationId if needed
     let conversationUpdate = { conversationId: newConversationId, endpoint: 'chatGPTBrowser' };
-    if (conversationId != newConversationId)
+    if (conversationId != newConversationId) {
       if (isNewConversation) {
         // change the conversationId to new one
         conversationUpdate = {
           ...conversationUpdate,
           conversationId: conversationId,
-          newConversationId: newConversationId
+          newConversationId: newConversationId,
         };
       } else {
         // create new conversation
         conversationUpdate = {
           ...conversationUpdate,
-          ...endpointOption
+          ...endpointOption,
         };
       }
+    }
 
-    await saveConvo(req.user.id, conversationUpdate);
+    await saveConvo(req, conversationUpdate);
     conversationId = newConversationId;
 
     // STEP3 update the user message
@@ -191,29 +191,31 @@ const ask = async ({
     userMessage.messageId = newUserMassageId;
 
     // If response has parentMessageId, the fake userMessage.messageId should be updated to the real one.
-    if (!overrideParentMessageId)
-      await saveMessage({
+    if (!overrideParentMessageId) {
+      await saveMessage(req, {
         ...userMessage,
+        user,
         messageId: userMessageId,
-        newMessageId: newUserMassageId
+        newMessageId: newUserMassageId,
       });
+    }
     userMessageId = newUserMassageId;
 
     sendMessage(res, {
-      title: await getConvoTitle(req.user.id, conversationId),
+      title: await getConvoTitle(user, conversationId),
       final: true,
-      conversation: await getConvo(req.user.id, conversationId),
+      conversation: await getConvo(user, conversationId),
       requestMessage: userMessage,
-      responseMessage: responseMessage
+      responseMessage: responseMessage,
     });
     res.end();
 
-    if (userParentMessageId == '00000000-0000-0000-0000-000000000000') {
+    if (userParentMessageId == Constants.NO_PARENT) {
       // const title = await titleConvo({ endpoint: endpointOption?.endpoint, text, response: responseMessage });
       const title = await response.details.title;
-      await saveConvo(req.user.id, {
+      await saveConvo(req, {
         conversationId: conversationId,
-        title
+        title,
       });
     }
   } catch (error) {
@@ -223,11 +225,11 @@ const ask = async ({
       conversationId,
       parentMessageId: overrideParentMessageId || userMessageId,
       unfinished: false,
-      cancelled: false,
-      // error: true,
-      text: `${getPartialMessage() ?? ''}\n\nError message: "${error.message}"`
+      error: true,
+      isCreatedByUser: false,
+      text: `${getPartialMessage() ?? ''}\n\nError message: "${error.message}"`,
     };
-    await saveMessage(errorMessage);
+    await saveMessage(req, { ...errorMessage, user });
     handleError(res, errorMessage);
   }
 };

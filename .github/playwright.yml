@@ -1,72 +1,72 @@
-name: Playwright Tests
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-jobs:
-  tests_e2e:
-    name: Run end-to-end tests
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    env:
-      BINGAI_TOKEN: ${{ secrets.BINGAI_TOKEN }}
-      CHATGPT_TOKEN: ${{ secrets.CHATGPT_TOKEN }}
-      MONGO_URI: ${{ secrets.MONGO_URI }}
-      OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-        cache: 'npm'
+# name: Playwright Tests
+# on:
+#   pull_request:
+#     branches: 
+#       - main
+#       - dev
+#       - release/*
+#     paths:
+#       - 'api/**'
+#       - 'client/**'
+#       - 'packages/**'
+#       - 'e2e/**'
+# jobs:
+#   tests_e2e:
+#     name: Run Playwright tests
+#     if: github.event.pull_request.head.repo.full_name == 'danny-avila/LibreChat'
+#     timeout-minutes: 60
+#     runs-on: ubuntu-latest
+#     env:
+#       NODE_ENV: CI
+#       CI: true
+#       SEARCH: false
+#       BINGAI_TOKEN: user_provided
+#       CHATGPT_TOKEN: user_provided
+#       MONGO_URI: ${{ secrets.MONGO_URI }}
+#       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+#       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+#       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+#       JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+#       CREDS_KEY: ${{ secrets.CREDS_KEY }}
+#       CREDS_IV: ${{ secrets.CREDS_IV }}
+#       DOMAIN_CLIENT: ${{ secrets.DOMAIN_CLIENT }}
+#       DOMAIN_SERVER: ${{ secrets.DOMAIN_SERVER }}
+#       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # Skip downloading during npm install
+#       PLAYWRIGHT_BROWSERS_PATH: 0 # Places binaries to node_modules/@playwright/test
+#       TITLE_CONVO: false
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 18
+#           cache: 'npm'
 
-    - name: Cache API dependencies
-      uses: actions/cache@v2
-      with:
-        path: ./api/node_modules
-        key: api-${{ runner.os }}-node-${{ hashFiles('./api/package-lock.json') }}
-        restore-keys: |
-          api-${{ runner.os }}-node-
+#       - name: Install global dependencies
+#         run: npm ci
 
-    - name: Install API dependencies
-      working-directory: ./api
-      run: npm ci
+#       # - name: Remove sharp dependency
+#       #   run: rm -rf node_modules/sharp
 
-    - name: Cache Client dependencies
-      uses: actions/cache@v2
-      with:
-        path: ./client/node_modules
-        key: client-${{ runner.os }}-node-${{ hashFiles('./client/package-lock.json') }}
-        restore-keys: |
-          client-${{ runner.os }}-node-
+#       # - name: Install sharp with linux dependencies
+#       #   run: cd api && SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install --arch=x64 --platform=linux --libc=glibc sharp
 
-    - name: Install Client dependencies
-      working-directory: ./client
-      run: npm ci
+#       - name: Build Client
+#         run: npm run frontend
 
-    - name: Build Client
-      working-directory: ./client
-      run: npm run build
+#       - name: Install Playwright
+#         run: |
+#           npx playwright install-deps
+#           npm install -D @playwright/test@latest
+#           npx playwright install chromium
 
-    - name: Install global dependencies
-      run: npm ci
+#       - name: Run Playwright tests
+#         run: npm run e2e:ci
 
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-
-    - name: Start API server
-      working-directory: ./api
-      run: |
-        npm run start &
-        sleep 10 # Wait for the server to start
-
-    - name: Run Playwright tests
-      run: npx playwright test
-
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: playwright-report
-        path: e2e/playwright-report/
-        retention-days: 30
+#       - name: Upload playwright report
+#         uses: actions/upload-artifact@v3
+#         if: always()
+#         with:
+#           name: playwright-report
+#           path: e2e/playwright-report/
+#           retention-days: 30

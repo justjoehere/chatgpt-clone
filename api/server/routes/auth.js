@@ -1,25 +1,53 @@
 const express = require('express');
 const {
-  resetPasswordRequestController,
-  resetPasswordController,
-  getUserController,
-  loginController,
-  logoutController,
   refreshController,
-  registrationController
-} = require('../controllers/auth.controller');
-const requireJwtAuth = require('../../middleware/requireJwtAuth');
-const requireLocalAuth = require('../../middleware/requireLocalAuth');
+  registrationController,
+  resetPasswordController,
+  resetPasswordRequestController,
+} = require('~/server/controllers/AuthController');
+const { loginController } = require('~/server/controllers/auth/LoginController');
+const { logoutController } = require('~/server/controllers/auth/LogoutController');
+const {
+  checkBan,
+  loginLimiter,
+  requireJwtAuth,
+  checkInviteUser,
+  registerLimiter,
+  requireLdapAuth,
+  requireLocalAuth,
+  resetPasswordLimiter,
+  validateRegistration,
+  validatePasswordReset,
+} = require('~/server/middleware');
 
 const router = express.Router();
 
+const ldapAuth = !!process.env.LDAP_URL && !!process.env.LDAP_USER_SEARCH_BASE;
 //Local
-router.get('/user', requireJwtAuth, getUserController);
 router.post('/logout', requireJwtAuth, logoutController);
-router.post('/login', requireLocalAuth, loginController);
-router.post('/refresh', requireJwtAuth, refreshController);
-router.post('/register', registrationController);
-router.post('/requestPasswordReset', resetPasswordRequestController);
-router.post('/resetPassword', resetPasswordController);
+router.post(
+  '/login',
+  loginLimiter,
+  checkBan,
+  ldapAuth ? requireLdapAuth : requireLocalAuth,
+  loginController,
+);
+router.post('/refresh', refreshController);
+router.post(
+  '/register',
+  registerLimiter,
+  checkBan,
+  checkInviteUser,
+  validateRegistration,
+  registrationController,
+);
+router.post(
+  '/requestPasswordReset',
+  resetPasswordLimiter,
+  checkBan,
+  validatePasswordReset,
+  resetPasswordRequestController,
+);
+router.post('/resetPassword', checkBan, validatePasswordReset, resetPasswordController);
 
 module.exports = router;

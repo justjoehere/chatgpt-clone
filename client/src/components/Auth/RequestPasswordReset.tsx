@@ -1,117 +1,148 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useRequestPasswordResetMutation, TRequestPasswordReset } from '~/data-provider';
+import { useState, ReactNode } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { useRequestPasswordResetMutation } from 'librechat-data-provider/react-query';
+import type { TRequestPasswordReset, TRequestPasswordResetResponse } from 'librechat-data-provider';
+import type { FC } from 'react';
+import type { TLoginLayoutContext } from '~/common';
+import { useLocalize } from '~/hooks';
+
+const BodyTextWrapper: FC<{ children: ReactNode }> = ({ children }) => {
+  return (
+    <div
+      className="relative mt-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700 dark:bg-green-900 dark:text-white"
+      role="alert"
+    >
+      {children}
+    </div>
+  );
+};
+
+const ResetPasswordBodyText = () => {
+  const localize = useLocalize();
+  return (
+    <div className="flex flex-col">
+      {localize('com_auth_reset_password_if_email_exists')}
+      <span>
+        <a className="text-sm text-green-500 hover:underline" href="/login">
+          {localize('com_auth_back_to_login')}
+        </a>
+      </span>
+    </div>
+  );
+};
 
 function RequestPasswordReset() {
+  const localize = useLocalize();
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<TRequestPasswordReset>();
+  const [bodyText, setBodyText] = useState<ReactNode | undefined>(undefined);
+  const { startupConfig, setHeaderText } = useOutletContext<TLoginLayoutContext>();
+
   const requestPasswordReset = useRequestPasswordResetMutation();
-  const [success, setSuccess] = useState<boolean>(false);
-  const [requestError, setRequestError] = useState<boolean>(false);
-  const [resetLink, setResetLink] = useState<string>('');
 
   const onSubmit = (data: TRequestPasswordReset) => {
     requestPasswordReset.mutate(data, {
-      onSuccess: (data) => {
-        setSuccess(true);
-        setResetLink(data.link);
+      onSuccess: (data: TRequestPasswordResetResponse) => {
+        if (data.link && !startupConfig?.emailEnabled) {
+          setHeaderText('com_auth_reset_password');
+          setBodyText(
+            <span>
+              {localize('com_auth_click')}{' '}
+              <a className="text-green-500 hover:underline" href={data.link}>
+                {localize('com_auth_here')}
+              </a>{' '}
+              {localize('com_auth_to_reset_your_password')}
+            </span>,
+          );
+        } else {
+          setHeaderText('com_auth_reset_password_link_sent');
+          setBodyText(<ResetPasswordBodyText />);
+        }
       },
       onError: () => {
-        setRequestError(true);
-        setTimeout(() => {
-          setRequestError(false);
-        }, 5000);
-      }
+        setHeaderText('com_auth_reset_password_link_sent');
+        setBodyText(<ResetPasswordBodyText />);
+      },
     });
   };
 
+  if (bodyText) {
+    return <BodyTextWrapper>{bodyText}</BodyTextWrapper>;
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white pt-6 sm:pt-0">
-      <div className="mt-6 w-96 overflow-hidden bg-white px-6 py-4 sm:max-w-md sm:rounded-lg">
-        <h1 className="mb-4 text-center text-3xl font-semibold">Reset your password</h1>
-        {success && (
-          <div
-            className="relative mt-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700"
-            role="alert"
+    <form
+      className="mt-6"
+      aria-label="Password reset form"
+      method="POST"
+      onSubmit={handleSubmit(onSubmit)}
+    >
+      <div className="mb-2">
+        <div className="relative">
+          <input
+            type="email"
+            id="email"
+            autoComplete="off"
+            aria-label={localize('com_auth_email')}
+            {...register('email', {
+              required: localize('com_auth_email_required'),
+              minLength: {
+                value: 3,
+                message: localize('com_auth_email_min_length'),
+              },
+              maxLength: {
+                value: 120,
+                message: localize('com_auth_email_max_length'),
+              },
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: localize('com_auth_email_pattern'),
+              },
+            })}
+            aria-invalid={!!errors.email}
+            className="
+              webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light
+              bg-surface-primary px-3.5 pb-2.5 pt-3 text-text-primary duration-200 focus:border-green-500 focus:outline-none
+            "
+            placeholder=" "
+          />
+          <label
+            htmlFor="email"
+            className="
+            absolute start-3 top-1.5 z-10 origin-[0] -translate-y-4 scale-75 transform bg-surface-primary px-2 text-sm text-text-secondary-alt duration-200
+            peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100
+            peer-focus:top-1.5 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-green-500
+            rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4
+            "
           >
-            Click{' '}
-            <a className="text-green-600 hover:underline" href={resetLink}>
-              HERE
-            </a>{' '}
-            to reset your password.
-            {/* An email has been sent with instructions on how to reset your password. */}
-          </div>
+            {localize('com_auth_email_address')}
+          </label>
+        </div>
+        {errors.email && (
+          <span role="alert" className="mt-1 text-sm text-red-500 dark:text-red-900">
+            {errors.email.message}
+          </span>
         )}
-        {requestError && (
-          <div
-            className="relative mt-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700"
-            role="alert"
-          >
-            There was a problem resetting your password. There was no user found with the email
-            address provided. Please try again.
-          </div>
-        )}
-        <form
-          className="mt-6"
-          aria-label="Password reset form"
-          method="POST"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <div className="mb-2">
-            <div className="relative">
-              <input
-                type="email"
-                id="email"
-                autoComplete="off"
-                aria-label="Email"
-                {...register('email', {
-                  required: 'Email is required',
-                  minLength: {
-                    value: 3,
-                    message: 'Email must be at least 6 characters'
-                  },
-                  maxLength: {
-                    value: 120,
-                    message: 'Email should not be longer than 120 characters'
-                  },
-                  pattern: {
-                    value: /\S+@\S+\.\S+/,
-                    message: 'You must enter a valid email address'
-                  }
-                })}
-                aria-invalid={!!errors.email}
-                className="peer block w-full appearance-none rounded-t-md border-0 border-b-2 border-gray-300 bg-gray-50 px-2.5 pb-2.5 pt-5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-0"
-                placeholder=" "
-              ></input>
-              <label
-                htmlFor="email"
-                className="absolute left-2.5 top-4 z-10 origin-[0] -translate-y-4 scale-75 transform text-gray-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:text-green-500"
-              >
-                Email address
-              </label>
-            </div>
-            {errors.email && (
-              <span role="alert" className="mt-1 text-sm text-red-600">
-                {/* @ts-ignore */}
-                {errors.email.message}
-              </span>
-            )}
-          </div>
-          <div className="mt-6">
-            <button
-              type="submit"
-              disabled={!!errors.email}
-              className="w-full rounded-sm border border-transparent bg-green-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-600 focus:outline-none active:bg-green-500"
-            >
-              Continue
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
+      <div className="mt-6">
+        <button
+          type="submit"
+          disabled={!!errors.email}
+          className="btn-primary w-full transform rounded-2xl px-4 py-3 tracking-wide transition-colors duration-200"
+        >
+          {localize('com_auth_continue')}
+        </button>
+        <div className="mt-4 flex justify-center">
+          <a href="/login" className="text-sm text-green-500">
+            {localize('com_auth_back_to_login')}
+          </a>
+        </div>
+      </div>
+    </form>
   );
 }
 

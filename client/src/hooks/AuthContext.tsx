@@ -1,170 +1,195 @@
 import {
-  useState,
-  useCallback,
-  useEffect,
   useMemo,
+  useState,
+  useEffect,
   ReactNode,
+  useContext,
+  useCallback,
   createContext,
-  useContext
 } from 'react';
+import { useRecoilState } from 'recoil';
+import { useNavigate } from 'react-router-dom';
+import { setTokenHeader, SystemRoles } from 'librechat-data-provider';
 import {
-  TUser,
-  TLoginResponse,
-  setTokenHeader,
-  useLoginUserMutation,
-  useLogoutUserMutation,
   useGetUserQuery,
+  useLoginUserMutation,
   useRefreshTokenMutation,
-  TLoginUser
-} from '~/data-provider';
-import { useNavigate, useLocation } from 'react-router-dom';
-
-export type TAuthContext = {
-  user: TUser | undefined;
-  token: string | undefined;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | undefined;
-  login: (data: TLoginUser) => void;
-  logout: () => void;
-};
-
-export type TUserContext = {
-  user?: TUser | undefined;
-  token: string | undefined;
-  isAuthenticated: boolean;
-  redirect?: string;
-};
+} from 'librechat-data-provider/react-query';
+import type { TLoginResponse, TLoginUser } from 'librechat-data-provider';
+import { TAuthConfig, TUserContext, TAuthContext, TResError } from '~/common';
+import { useLogoutUserMutation, useGetRole } from '~/data-provider';
+import useTimeout from './useTimeout';
+import store from '~/store';
 
 const AuthContext = createContext<TAuthContext | undefined>(undefined);
 
-const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<TUser | undefined>(undefined);
+const AuthContextProvider = ({
+  authConfig,
+  children,
+}: {
+  authConfig?: TAuthConfig;
+  children: ReactNode;
+}) => {
+  const [user, setUser] = useRecoilState(store.user);
   const [token, setToken] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { data: userRole = null } = useGetRole(SystemRoles.USER, {
+    enabled: !!(isAuthenticated && (user?.role ?? '')),
+  });
+  const { data: adminRole = null } = useGetRole(SystemRoles.ADMIN, {
+    enabled: !!(isAuthenticated && user?.role === SystemRoles.ADMIN),
+  });
 
   const navigate = useNavigate();
 
+  const setUserContext = useCallback(
+    (userContext: TUserContext) => {
+      const { token, isAuthenticated, user, redirect } = userContext;
+      if (user) {
+        setUser(user);
+      }
+      setToken(token);
+      //@ts-ignore - ok for token to be undefined initially
+      setTokenHeader(token);
+      setIsAuthenticated(isAuthenticated);
+      if (redirect != null && redirect) {
+        navigate(redirect, { replace: true });
+      }
+    },
+    [navigate, setUser],
+  );
+  const doSetError = useTimeout({ callback: (error) => setError(error as string | undefined) });
+
   const loginUser = useLoginUserMutation();
-  const logoutUser = useLogoutUserMutation();
-  const userQuery = useGetUserQuery({ enabled: !!token });
+  const logoutUser = useLogoutUserMutation({
+    onSuccess: () => {
+      setUserContext({
+        token: undefined,
+        isAuthenticated: false,
+        user: undefined,
+        redirect: '/login',
+      });
+    },
+    onError: (error) => {
+      doSetError((error as Error).message);
+      setUserContext({
+        token: undefined,
+        isAuthenticated: false,
+        user: undefined,
+        redirect: '/login',
+      });
+    },
+  });
+
+  const logout = useCallback(() => logoutUser.mutate(undefined), [logoutUser]);
+  const userQuery = useGetUserQuery({ enabled: !!(token ?? '') });
   const refreshToken = useRefreshTokenMutation();
-
-  const location = useLocation();
-
-  const setUserContext = (userContext: TUserContext) => {
-    const { token, isAuthenticated, user, redirect } = userContext;
-    if (user) {
-      setUser(user);
-    }
-    setToken(token);
-    setTokenHeader(token);
-    setIsAuthenticated(isAuthenticated);
-    if (redirect) {
-      navigate(redirect);
-    }
-  };
-
-  const getCookieValue = (key) => {
-    let keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
-    return keyValue ? keyValue[2] : null;
-  };
 
   const login = (data: TLoginUser) => {
     loginUser.mutate(data, {
       onSuccess: (data: TLoginResponse) => {
         const { user, token } = data;
-        setUserContext({ token, isAuthenticated: true, user, redirect: '/chat/new' });
+        setError(undefined);
+        setUserContext({ token, isAuthenticated: true, user, redirect: '/c/new' });
       },
-      onError: (error) => {
-        setError(error.message);
-      }
+      onError: (error: TResError | unknown) => {
+        const resError = error as TResError;
+        doSetError(resError.message);
+        navigate('/login', { replace: true });
+      },
     });
   };
 
-  const logout = () => {
-    document.cookie.split(';').forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, '')
-        .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
-    });
-    logoutUser.mutate(undefined, {
-      onSuccess: () => {
-        setUserContext({
-          token: undefined,
-          isAuthenticated: false,
-          user: undefined,
-          redirect: '/login'
-        });
+  const silentRefresh = useCallback(() => {
+    if (authConfig?.test === true) {
+      console.log('Test mode. Skipping silent refresh.');
+      return;
+    }
+    refreshToken.mutate(undefined, {
+      onSuccess: (data: TLoginResponse | undefined) => {
+        const { user, token = '' } = data ?? {};
+        if (token) {
+          setUserContext({ token, isAuthenticated: true, user });
+        } else {
+          console.log('Token is not present. User is not authenticated.');
+          if (authConfig?.test === true) {
+            return;
+          }
+          navigate('/login');
+        }
       },
       onError: (error) => {
-        setError(error.message);
-      }
+        console.log('refreshToken mutation error:', error);
+        if (authConfig?.test === true) {
+          return;
+        }
+        navigate('/login');
+      },
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (userQuery.data) {
       setUser(userQuery.data);
     } else if (userQuery.isError) {
-      setError(userQuery.error.message);
-      navigate('/login');
+      doSetError((userQuery.error as Error).message);
+      navigate('/login', { replace: true });
     }
-    if (error && isAuthenticated) {
-      setError(undefined);
+    if (error != null && error && isAuthenticated) {
+      doSetError(undefined);
     }
-    if (!token || !isAuthenticated) {
-      const tokenFromCookie = getCookieValue('token');
-      if (tokenFromCookie) {
-        // debugger;
-        setUserContext({ token: tokenFromCookie, isAuthenticated: true, user: userQuery.data });
-      } else {
-        navigate('/login');
-      }
+    if (token == null || !token || !isAuthenticated) {
+      silentRefresh();
     }
-  }, [token, isAuthenticated, userQuery.data, userQuery.isError]);
-
-  // const silentRefresh = useCallback(() => {
-  //   refreshToken.mutate(undefined, {
-  //     onSuccess: (data: TLoginResponse) => {
-  //       const { user, token } = data;
-  //       setUserContext({ token, isAuthenticated: true, user });
-  //     },
-  //     onError: error => {
-  //       setError(error.message);
-  //     }
-  //   });
-  //   setTimeout(silentRefresh, 5 * 60 * 1000);
-  // }, [setUserContext]);
+  }, [
+    token,
+    isAuthenticated,
+    userQuery.data,
+    userQuery.isError,
+    userQuery.error,
+    error,
+    setUser,
+    navigate,
+    silentRefresh,
+    setUserContext,
+  ]);
 
   useEffect(() => {
-    if (loginUser.isLoading || logoutUser.isLoading) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
-    }
-  }, [loginUser.isLoading, logoutUser.isLoading]);
+    const handleTokenUpdate = (event) => {
+      console.log('tokenUpdated event received event');
+      const newToken = event.detail;
+      setUserContext({
+        token: newToken,
+        isAuthenticated: true,
+        user: user,
+      });
+    };
 
-  // useEffect(() => {
-  //   if (token)
-  //   silentRefresh();
-  // }, [token, silentRefresh]);
+    window.addEventListener('tokenUpdated', handleTokenUpdate);
+
+    return () => {
+      window.removeEventListener('tokenUpdated', handleTokenUpdate);
+    };
+  }, [setUserContext, user]);
 
   // Make the provider update only when it should
   const memoedValue = useMemo(
     () => ({
       user,
       token,
-      isAuthenticated,
-      isLoading,
       error,
       login,
-      logout
+      logout,
+      setError,
+      roles: {
+        [SystemRoles.USER]: userRole,
+        [SystemRoles.ADMIN]: adminRole,
+      },
+      isAuthenticated,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, isLoading, error, isAuthenticated, token]
+    [user, error, isAuthenticated, token, userRole, adminRole],
   );
 
   return <AuthContext.Provider value={memoedValue}>{children}</AuthContext.Provider>;

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const mongoMeili = require('../plugins/mongoMeili');
+const mongoMeili = require('~/models/plugins/mongoMeili');
 const messageSchema = mongoose.Schema(
   {
     messageId: {
@@ -7,62 +7,139 @@ const messageSchema = mongoose.Schema(
       unique: true,
       required: true,
       index: true,
-      meiliIndex: true
+      meiliIndex: true,
     },
     conversationId: {
       type: String,
+      index: true,
       required: true,
-      meiliIndex: true
+      meiliIndex: true,
+    },
+    user: {
+      type: String,
+      index: true,
+      required: true,
+      default: null,
+    },
+    model: {
+      type: String,
+      default: null,
+    },
+    endpoint: {
+      type: String,
     },
     conversationSignature: {
-      type: String
-      // required: true
+      type: String,
     },
     clientId: {
-      type: String
+      type: String,
     },
     invocationId: {
-      type: String
+      type: Number,
     },
     parentMessageId: {
-      type: String
-      // required: true
+      type: String,
+    },
+    tokenCount: {
+      type: Number,
+    },
+    summaryTokenCount: {
+      type: Number,
     },
     sender: {
       type: String,
-      required: true,
-      meiliIndex: true
+      meiliIndex: true,
     },
     text: {
       type: String,
-      required: true,
-      meiliIndex: true
+      meiliIndex: true,
+    },
+    summary: {
+      type: String,
     },
     isCreatedByUser: {
       type: Boolean,
       required: true,
-      default: false
+      default: false,
+    },
+    isEdited: {
+      type: Boolean,
+      default: false,
     },
     unfinished: {
       type: Boolean,
-      default: false
-    },
-    cancelled: {
-      type: Boolean,
-      default: false
+      default: false,
     },
     error: {
       type: Boolean,
-      default: false
+      default: false,
+    },
+    finish_reason: {
+      type: String,
     },
     _meiliIndex: {
       type: Boolean,
       required: false,
       select: false,
-      default: false
-    }
+      default: false,
+    },
+    files: { type: [{ type: mongoose.Schema.Types.Mixed }], default: undefined },
+    plugin: {
+      type: {
+        latest: {
+          type: String,
+          required: false,
+        },
+        inputs: {
+          type: [mongoose.Schema.Types.Mixed],
+          required: false,
+          default: undefined,
+        },
+        outputs: {
+          type: String,
+          required: false,
+        },
+      },
+      default: undefined,
+    },
+    plugins: { type: [{ type: mongoose.Schema.Types.Mixed }], default: undefined },
+    content: {
+      type: [{ type: mongoose.Schema.Types.Mixed }],
+      default: undefined,
+      meiliIndex: true,
+    },
+    thread_id: {
+      type: String,
+    },
+    /* frontend components */
+    iconURL: {
+      type: String,
+    },
+    attachments: { type: [{ type: mongoose.Schema.Types.Mixed }], default: undefined },
+    /*
+    attachments: {
+      type: [
+        {
+          file_id: String,
+          filename: String,
+          filepath: String,
+          expiresAt: Date,
+          width: Number,
+          height: Number,
+          type: String,
+          conversationId: String,
+          messageId: {
+            type: String,
+            required: true,
+          },
+          toolCallId: String,
+        },
+      ],
+      default: undefined,
+    },
+    */
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 if (process.env.MEILI_HOST && process.env.MEILI_MASTER_KEY) {
@@ -70,10 +147,14 @@ if (process.env.MEILI_HOST && process.env.MEILI_MASTER_KEY) {
     host: process.env.MEILI_HOST,
     apiKey: process.env.MEILI_MASTER_KEY,
     indexName: 'messages',
-    primaryKey: 'messageId'
+    primaryKey: 'messageId',
   });
 }
 
+messageSchema.index({ createdAt: 1 });
+messageSchema.index({ messageId: 1, user: 1 }, { unique: true });
+
+/** @type {mongoose.Model<TMessage>} */
 const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
 
 module.exports = Message;

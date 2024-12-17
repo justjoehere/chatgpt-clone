@@ -1,138 +1,177 @@
-﻿
 <p align="center">
-  <a href="https://discord.gg/NGaa9RPCft">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/110412045/228325485-9d3e618f-a980-44fe-89e9-d6d39164680e.png">
-      <img src="https://user-images.githubusercontent.com/110412045/228325485-9d3e618f-a980-44fe-89e9-d6d39164680e.png" height="128">
-    </picture>
-    <h1 align="center">LibreChat</h1>
+  <a href="https://librechat.ai">
+    <img src="client/public/assets/logo.svg" height="256">
+  </a>
+  <h1 align="center">
+    <a href="https://librechat.ai">LibreChat</a>
+  </h1>
+</p>
+
+<p align="center">
+  <a href="https://discord.librechat.ai"> 
+    <img
+      src="https://img.shields.io/discord/1086345563026489514?label=&logo=discord&style=for-the-badge&logoWidth=20&logoColor=white&labelColor=000000&color=blueviolet">
+  </a>
+  <a href="https://www.youtube.com/@LibreChat"> 
+    <img
+      src="https://img.shields.io/badge/YOUTUBE-red.svg?style=for-the-badge&logo=youtube&logoColor=white&labelColor=000000&logoWidth=20">
+  </a>
+  <a href="https://docs.librechat.ai"> 
+    <img
+      src="https://img.shields.io/badge/DOCS-blue.svg?style=for-the-badge&logo=read-the-docs&logoColor=white&labelColor=000000&logoWidth=20">
+  </a>
+  <a aria-label="Sponsors" href="https://github.com/sponsors/danny-avila">
+    <img
+      src="https://img.shields.io/badge/SPONSORS-brightgreen.svg?style=for-the-badge&logo=github-sponsors&logoColor=white&labelColor=000000&logoWidth=20">
   </a>
 </p>
 
 <p align="center">
-  <a aria-label="Join the community on Discord" href="https://discord.gg/NGaa9RPCft">
-    <img alt="" src="https://img.shields.io/badge/Join%20the%20community-blueviolet.svg?style=for-the-badge&logo=DISCORD&labelColor=000000&logoWidth=20">
+<a href="https://railway.app/template/b5k2mn?referralCode=HI9hWz">
+  <img src="https://railway.app/button.svg" alt="Deploy on Railway" height="30">
+</a>
+<a href="https://zeabur.com/templates/0X2ZY8">
+  <img src="https://zeabur.com/button.svg" alt="Deploy on Zeabur" height="30"/>
+</a>
+<a href="https://template.cloud.sealos.io/deploy?templateName=librechat">
+  <img src="https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg" alt="Deploy on Sealos" height="30">
+</a>
+</p>
+
+# ✨ Features
+
+- 🖥️ **UI & Experience** inspired by ChatGPT with enhanced design and features
+
+- 🤖 **AI Model Selection**:  
+  - Anthropic (Claude), AWS Bedrock, OpenAI, Azure OpenAI, Google, Vertex AI, OpenAI Assistants API (incl. Azure)
+  - [Custom Endpoints](https://www.librechat.ai/docs/quick_start/custom_endpoints): Use any OpenAI-compatible API with LibreChat, no proxy required
+  - Compatible with [Local & Remote AI Providers](https://www.librechat.ai/docs/configuration/librechat_yaml/ai_endpoints):
+    - Ollama, groq, Cohere, Mistral AI, Apple MLX, koboldcpp, together.ai,
+    - OpenRouter, Perplexity, ShuttleAI, Deepseek, Qwen, and more
+
+- 🔧 **[Code Interpreter API](https://www.librechat.ai/docs/features/code_interpreter)**: 
+  - Secure, Sandboxed Execution in Python, Node.js (JS/TS), Go, C/C++, Java, PHP, Rust, and Fortran
+  - Seamless File Handling: Upload, process, and download files directly
+  - No Privacy Concerns: Fully isolated and secure execution
+
+- 🔦 **Agents & Tools Integration**:  
+  - **[LibreChat Agents](https://www.librechat.ai/docs/features/agents)**:
+    - No-Code Custom Assistants: Build specialized, AI-driven helpers without coding  
+    - Flexible & Extensible: Attach tools like DALL-E-3, file search, code execution, and more  
+    - Compatible with Custom Endpoints, OpenAI, Azure, Anthropic, AWS Bedrock, and more
+  - Use LibreChat Agents and OpenAI Assistants with Files, Code Interpreter, Tools, and API Actions
+
+- 🪄 **Generative UI with Code Artifacts**:  
+  - [Code Artifacts](https://youtu.be/GfTj7O4gmd0?si=WJbdnemZpJzBrJo3) allow creation of React, HTML, and Mermaid diagrams directly in chat
+
+- 💾 **Presets & Context Management**:  
+  - Create, Save, & Share Custom Presets  
+  - Switch between AI Endpoints and Presets mid-chat
+  - Edit, Resubmit, and Continue Messages with Conversation branching  
+  - [Fork Messages & Conversations](https://www.librechat.ai/docs/features/fork) for Advanced Context control
+
+- 💬 **Multimodal & File Interactions**:  
+  - Upload and analyze images with Claude 3, GPT-4o, o1, Llama-Vision, and Gemini 📸  
+  - Chat with Files using Custom Endpoints, OpenAI, Azure, Anthropic, AWS Bedrock, & Google 🗃️
+
+- 🌎 **Multilingual UI**:  
+  - English, 中文, Deutsch, Español, Français, Italiano, Polski, Português Brasileiro
+  - Русский, 日本語, Svenska, 한국어, Tiếng Việt, 繁體中文, العربية, Türkçe, Nederlands, עברית
+
+- 🎨 **Customizable Interface**:  
+  - Customizable Dropdown & Interface that adapts to both power users and newcomers
+
+- 📧 **Secure Access**:  
+  - Verify your email to ensure secure access
+
+- 🗣️ **Speech & Audio**:  
+  - Chat hands-free with Speech-to-Text and Text-to-Speech  
+  - Automatically send and play Audio  
+  - Supports OpenAI, Azure OpenAI, and Elevenlabs
+
+- 📥 **Import & Export Conversations**:  
+  - Import Conversations from LibreChat, ChatGPT, Chatbot UI  
+  - Export conversations as screenshots, markdown, text, json
+
+- 🔍 **Search & Discovery**:  
+  - Search all messages/conversations
+
+- 👥 **Multi-User & Secure**:
+  - Multi-User, Secure Authentication with OAuth2 & Email Login Support
+  - Built-in Moderation, and Token spend tools
+
+- ⚙️ **Configuration & Deployment**:  
+  - Configure Proxy, Reverse Proxy, Docker, & many Deployment options  
+  - Use completely local or deploy on the cloud
+
+- 📖 **Open-Source & Community**:  
+  - Completely Open-Source & Built in Public  
+  - Community-driven development, support, and feedback
+
+[For a thorough review of our features, see our docs here](https://docs.librechat.ai/) 📚
+
+## 🪶 All-In-One AI Conversations with LibreChat
+
+LibreChat brings together the future of assistant AIs with the revolutionary technology of OpenAI's ChatGPT. Celebrating the original styling, LibreChat gives you the ability to integrate multiple AI models. It also integrates and enhances original client features such as conversation and message search, prompt templates and plugins.
+
+With LibreChat, you no longer need to opt for ChatGPT Plus and can instead use free or pay-per-call APIs. We welcome contributions, cloning, and forking to enhance the capabilities of this advanced chatbot platform.
+
+[![Watch the video](https://raw.githubusercontent.com/LibreChat-AI/librechat.ai/main/public/images/changelog/v0.7.5.png)](https://www.youtube.com/watch?v=IDukQ7a2f3U)
+Click on the thumbnail to open the video☝️
+
+---
+
+## 🌐 Resources
+
+**GitHub Repo:**
+  - **RAG API:** [github.com/danny-avila/rag_api](https://github.com/danny-avila/rag_api)
+  - **Website:** [github.com/LibreChat-AI/librechat.ai](https://github.com/LibreChat-AI/librechat.ai)
+
+**Other:**
+  - **Website:** [librechat.ai](https://librechat.ai)
+  - **Documentation:** [docs.librechat.ai](https://docs.librechat.ai)
+  - **Blog:** [blog.librechat.ai](https://blog.librechat.ai)
+
+---
+
+## 📝 Changelog
+
+Keep up with the latest updates by visiting the releases page and notes:
+- [Releases](https://github.com/danny-avila/LibreChat/releases)
+- [Changelog](https://www.librechat.ai/changelog) 
+
+**⚠️ Please consult the [changelog](https://www.librechat.ai/changelog) for breaking changes before updating.**
+
+---
+
+## ⭐ Star History
+
+<p align="center">
+  <a href="https://star-history.com/#danny-avila/LibreChat&Date">
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=danny-avila/LibreChat&type=Date&theme=dark" onerror="this.src='https://api.star-history.com/svg?repos=danny-avila/LibreChat&type=Date'" />
   </a>
-  <a aria-label="Sponsors" href="#sponsors">
-    <img alt="" src="https://img.shields.io/badge/SPONSORS-brightgreen.svg?style=for-the-badge&labelColor=000000&logoWidth=20">
+</p>
+<p align="center">
+  <a href="https://trendshift.io/repositories/4685" target="_blank" style="padding: 10px;">
+    <img src="https://trendshift.io/api/badge/repositories/4685" alt="danny-avila%2FLibreChat | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+  </a>
+  <a href="https://runacap.com/ross-index/q1-24/" target="_blank" rel="noopener" style="margin-left: 20px;">
+    <img style="width: 260px; height: 56px" src="https://runacap.com/wp-content/uploads/2024/04/ROSS_badge_white_Q1_2024.svg" alt="ROSS Index - Fastest Growing Open-Source Startups in Q1 2024 | Runa Capital" width="260" height="56"/>
   </a>
 </p>
 
-## All AI Conversations under One Roof. ##
-  Assistant AIs are the future and OpenAI revolutionized this movement with ChatGPT. While numerous UIs exist, this app commemorates the original styling of ChatGPT, with the ability to integrate any current/future AI models, while integrating and improving upon original client features, such as conversation/message search and prompt templates (currently WIP). Through this clone, you can avoid ChatGPT Plus in favor of free or pay-per-call APIs. I will soon deploy a demo of this app. Feel free to contribute, clone, or fork. Currently dockerized.
-  
-  ![clone3](https://user-images.githubusercontent.com/110412045/230538752-9b99dc6e-cd02-483a-bff0-6c6e780fa7ae.gif)
+---
 
-# Features
+## ✨ Contributions
 
-- Response streaming identical to ChatGPT through server-sent events
-- UI from original ChatGPT, including Dark mode
-- AI model selection (through 3 endpoints: OpenAI API, BingAI, and ChatGPT Browser)
-- Create, Save, & Share custom presets for OpenAI and BingAI endpoints - [More info on customization here](https://github.com/danny-avila/chatgpt-clone/releases/tag/v0.3.0)
-- Edit and Resubmit messages just like the official site (with conversation branching)
-- Search all messages/conversations - [More info here](https://github.com/danny-avila/chatgpt-clone/releases/tag/v0.1.0)
-- Integrating plugins soon
+Contributions, suggestions, bug reports and fixes are welcome!
 
-##
-# Sponsors
-
-  Sponsored by <a href="https://github.com/DavidDev1334"><b>@DavidDev1334</b></a>, <a href="https://github.com/mjtechguy"><b>@mjtechguy</b></a>, <a href="https://github.com/Pharrcyde"><b>@Pharrcyde</b></a>, & <a href="https://github.com/fuegovic"><b>@fuegovic</b></a>
-
-##
-
-## **Google's PaLM 2 is now supported as of [v0.4.3](https://github.com/danny-avila/chatgpt-clone/releases/tag/v0.4.3)**
-  
-  ![image](https://github.com/danny-avila/chatgpt-clone/assets/110412045/ec5e8ff3-6c3a-4f25-9687-d8558435d094)
- 
-<details>
-<summary><strong>How to Setup PaLM 2 (via Google Cloud Vertex AI API)</strong></summary>
-- Enable the Vertex AI API on Google Cloud:
-- - https://console.cloud.google.com/vertex-ai
-- Create a Service Account:
-- - https://console.cloud.google.com/projectselector/iam-admin/serviceaccounts/create?walkthrough_id=iam--create-service-account#step_index=1
-- Make sure to click 'Create and Continue' to give at least the 'Vertex AI User' role.
-- Create a JSON key, rename as 'auth.json' and save it in /api/data/.
-
-**Alternatively**
-
-- In your ./api/.env file, set PALM_KEY as "user_provided" to allow the user to provide a Service Account key JSON from the UI.
-- They will follow the steps above except for renaming the file, simply importing the JSON when prompted.
-- The key is sent to the server but never saved except in your local storage
-
-**Note:**
-
-- Vertex AI does not (yet) support response streaming for text generations, so response may seem to take long when generating a lot of text.
-- Text streaming is simulated
-</details>
+For new features, components, or extensions, please open an issue and discuss before sending a PR.
 
 ---
 
-## [Read all Latest Updates here](CHANGELOG.md)
+## 💖 This project exists in its current state thanks to all the people who contribute
 
-<h1>Table of Contents</h1>
-
-<details open>
-  <summary><strong>Getting Started</strong></summary>
-
-  * [Docker Install](/docs/install/docker_install.md)
-  * [Linux Install](docs/install/linux_install.md)
-  * [Mac Install](docs/install/mac_install.md)
-  * [Windows Install](docs/install/windows_install.md)
-</details>
-
-<details>
-  <summary><strong>General Information</strong></summary>
-
-  * [Code of Conduct](CODE_OF_CONDUCT.md)
-  * [Project Origin](docs/general_info/project_origin.md)
-  * [Multilingual Information](docs/general_info/multilingual_information.md)
-  * [Roadmap](docs/general_info/roadmap.md)
-  * [Tech Stack](docs/general_info/tech_stack.md)
-  * [Changelog](CHANGELOG.md)
-  * [Bing Jailbreak Info](docs/general_info/bing_jailbreak_info.md)
-</details>
-
-<details>
-  <summary><strong>Features</strong></summary>
-
-  * [User Auth System](docs/features/user_auth_system.md)
-  * [Proxy](docs/features/proxy.md)
-</details>
-
-<details>
-  <summary><strong>Cloud Deployment</strong></summary>
-
-  * [Heroku](docs/deployment/heroku.md)
-</details>
-
-<details>
-  <summary><strong>Contributions</strong></summary>
-
-  * [Contributor Guidelines](CONTRIBUTING.md)
-  * [Documentation Guidelines](docs/contributions/documentation_guidelines.md)
-  * [Code Standards and Conventions](docs/contributions/coding_conventions.md)
-  * [Testing](docs/contributions/testing.md)
-  * [Security](SECURITY.md)
-  * [Trello Board](https://trello.com/b/17z094kq/chatgpt-clone)
-</details>
-
-
-##
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=danny-avila/chatgpt-clone&type=Date)](https://star-history.com/#danny-avila/chatgpt-clone&Date)
-
-## Contributors
-Contributions and suggestions bug reports and fixes are welcome!
-Please read the documentation before you do!
-
-For new features, components, or extensions, please open an issue and discuss before sending a PR. 
-
-- Join the [Discord community](https://discord.gg/uDyZ5Tzhct)
-
-This project exists in its current state thanks to all the people who contribute
----
-<a href="https://github.com/danny-avila/chatgpt-clone/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=danny-avila/chatgpt-clone" />
+<a href="https://github.com/danny-avila/LibreChat/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=danny-avila/LibreChat" />
 </a>

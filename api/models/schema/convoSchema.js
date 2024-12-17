@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const mongoMeili = require('../plugins/mongoMeili');
-const conversationPreset = require('./conversationPreset');
+const { conversationPreset } = require('./defaults');
 const convoSchema = mongoose.Schema(
   {
     conversationId: {
@@ -8,44 +8,53 @@ const convoSchema = mongoose.Schema(
       unique: true,
       required: true,
       index: true,
-      meiliIndex: true
+      meiliIndex: true,
     },
     title: {
       type: String,
       default: 'New Chat',
-      meiliIndex: true
+      meiliIndex: true,
     },
     user: {
       type: String,
-      default: null
+      index: true,
     },
     messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
     // google only
-    examples: [{ type: mongoose.Schema.Types.Mixed }],
+    examples: { type: [{ type: mongoose.Schema.Types.Mixed }], default: undefined },
+    agentOptions: {
+      type: mongoose.Schema.Types.Mixed,
+    },
     ...conversationPreset,
+    agent_id: {
+      type: String,
+    },
     // for bingAI only
     bingConversationId: {
       type: String,
-      default: null
     },
     jailbreakConversationId: {
       type: String,
-      default: null
     },
     conversationSignature: {
       type: String,
-      default: null
     },
     clientId: {
       type: String,
-      default: null
     },
     invocationId: {
       type: Number,
-      default: 1
-    }
+    },
+    tags: {
+      type: [String],
+      default: [],
+      meiliIndex: true,
+    },
+    files: {
+      type: [String],
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 if (process.env.MEILI_HOST && process.env.MEILI_MASTER_KEY) {
@@ -53,9 +62,12 @@ if (process.env.MEILI_HOST && process.env.MEILI_MASTER_KEY) {
     host: process.env.MEILI_HOST,
     apiKey: process.env.MEILI_MASTER_KEY,
     indexName: 'convos', // Will get created automatically if it doesn't exist already
-    primaryKey: 'conversationId'
+    primaryKey: 'conversationId',
   });
 }
+
+convoSchema.index({ createdAt: 1, updatedAt: 1 });
+convoSchema.index({ conversationId: 1, user: 1 }, { unique: true });
 
 const Conversation = mongoose.models.Conversation || mongoose.model('Conversation', convoSchema);
 

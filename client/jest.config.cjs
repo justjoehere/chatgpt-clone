@@ -11,12 +11,9 @@ module.exports = {
     '!src/**/*.css.d.ts',
     '!src/**/*.d.ts',
   ],
-  coveragePathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/test/setupTests.js',
-  ],
+  coveragePathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/test/setupTests.js'],
   //  Todo: Add coverageThreshold once we have enough coverage
-  //  Note: eventually we want to have these values set to 80% 
+  //  Note: eventually we want to have these values set to 80%
   // coverageThreshold: {
   //   global: {
   //     functions: 9,
@@ -29,9 +26,9 @@ module.exports = {
     '\\.(css)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       'jest-file-loader',
-    'layout-test-utils': '<rootDir>/test/layout-test-utils',
-    '^@src/(.*)$': '<rootDir>/src/$1',
-    '^modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^test/(.*)$': '<rootDir>/test/$1',
+    '^~/(.*)$': '<rootDir>/src/$1',
+    '^librechat-data-provider/react-query$': '<rootDir>/../node_modules/librechat-data-provider/src/react-query',
   },
   restoreMocks: true,
   testResultsProcessor: 'jest-junit',
@@ -41,6 +38,7 @@ module.exports = {
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       'jest-file-loader',
   },
+  transformIgnorePatterns: ['node_modules/?!@zattoo/use-double-click'],
   preset: 'ts-jest',
   setupFilesAfterEnv: ['@testing-library/jest-dom/extend-expect', '<rootDir>/test/setupTests.js'],
   clearMocks: true,

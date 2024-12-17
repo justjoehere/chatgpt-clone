@@ -1,44 +1,24 @@
-const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
+const socialLogin = require('./socialLogin');
 
-const User = require('../models/User');
+const getProfileDetails = (profile) => ({
+  email: profile.emails[0].value,
+  id: profile.id,
+  avatarUrl: profile.photos[0].value,
+  username: profile.name.givenName,
+  name: `${profile.name.givenName} ${profile.name.familyName}`,
+  emailVerified: profile.emails[0].verified,
+});
 
-const serverUrl =
-  process.env.NODE_ENV === 'production' ? process.env.SERVER_URL_PROD : process.env.SERVER_URL_DEV;
+const googleLogin = socialLogin('google', getProfileDetails);
 
-// google strategy
-const googleLogin = new GoogleStrategy(
-  {
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${serverUrl}${process.env.GOOGLE_CALLBACK_URL}`,
-    proxy: true
-  },
-  async (accessToken, refreshToken, profile, cb) => {
-    try {
-      const oldUser = await User.findOne({ email: profile.emails[0].value });
-      if (oldUser) {
-        return cb(null, oldUser);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-
-    try {
-      const newUser = await new User({
-        provider: 'google',
-        googleId: profile.id,
-        username: profile.name.givenName,
-        email: profile.emails[0].value,
-        emailVerified: profile.emails[0].verified,
-        name: `${profile.name.givenName} ${profile.name.familyName}`,
-        avatar: profile.photos[0].value
-      }).save();
-      cb(null, newUser);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-);
-
-passport.use(googleLogin);
+module.exports = () =>
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.DOMAIN_SERVER}${process.env.GOOGLE_CALLBACK_URL}`,
+      proxy: true,
+    },
+    googleLogin,
+  );
